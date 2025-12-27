@@ -1,0 +1,44 @@
+<#
+.SYNOPSIS
+Installer for Dockerit CLI on Windows
+#>
+
+# Default installation folder
+$installDir = "C:\Program Files\dockerit"
+
+# Ask user for custom folder
+$customDir = Read-Host "Enter installation folder [default: $installDir]"
+if ($customDir -ne "") { $installDir = $customDir }
+
+# Ensure folder exists
+if (-not (Test-Path $installDir)) {
+    New-Item -ItemType Directory -Path $installDir | Out-Null
+}
+
+# Copy dockerit.exe (assume it is in the same folder as this script)
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$sourceFile = Join-Path $scriptDir "dockerit.exe"
+
+if (-not (Test-Path $sourceFile)) {
+    Write-Host "dockerit.exe not found in $scriptDir"
+    exit 1
+}
+
+Copy-Item $sourceFile -Destination $installDir -Force
+Write-Host "Dockerit installed to $installDir"
+
+# Ask to add to PATH
+$addPath = Read-Host "Do you want to add Dockerit to PATH? (y/N)"
+if ($addPath -match "^[Yy]$") {
+    $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    if ($currentPath -notlike "*$installDir*") {
+        [Environment]::SetEnvironmentVariable("Path", "$currentPath;$installDir", "User")
+        Write-Host "PATH updated. You may need to restart your terminal."
+    } else {
+        Write-Host "Install folder is already in PATH."
+    }
+} else {
+    Write-Host "PATH not modified. You can run dockerit.exe with full path."
+}
+
+Write-Host "Installation complete!"
